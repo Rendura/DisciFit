@@ -91,39 +91,39 @@ class App:
         # COMBOBOX TARGET GOAL
         self.create_label(parent, "Target Goal:")
         self.goal = ttk.Combobox(parent, values=["Gain", "Loss"], state="readonly",
-                                 width=self.width, font=self.entry_font)
+                                 width=self.width, font=self.entry_font, justify='center')
         self.goal.current(0)
         self.goal.pack(pady=8, ipady=6)
 
         # USER INPUT TARGET WEIGHT
         self.create_label(parent, "Target Weight (kg):")
-        self.target_weight = tk.Entry(parent, font=self.entry_font, width=self.width)
+        self.target_weight = tk.Entry(parent, font=self.entry_font, width=self.width, justify='center')
         self.target_weight.pack(pady=8, ipady=8)
 
         # USER INPUT TARGET TIME FRAME
         self.create_label(parent, "Target Timeframe (weeks):")
-        self.weeks = tk.Entry(parent, font=self.entry_font, width=self.width)
+        self.weeks = tk.Entry(parent, font=self.entry_font, width=self.width, justify='center')
         self.weeks.pack(pady=8, ipady=8)
 
         # USER INPUT AGE
         self.create_label(parent, "Age:")
-        self.age = tk.Entry(parent, font=self.entry_font, width=self.width)
+        self.age = tk.Entry(parent, font=self.entry_font, width=self.width, justify='center')
         self.age.pack(pady=8, ipady=8)
 
         # USER INPUT HEIGHT
         self.create_label(parent, "Height (cm):")
-        self.height = tk.Entry(parent, font=self.entry_font, width=self.width)
+        self.height = tk.Entry(parent, font=self.entry_font, width=self.width, justify='center')
         self.height.pack(pady=8, ipady=8)
 
         # USER INPUT CURRENT WEIGHT
         self.create_label(parent, "Current Weight (kg):")
-        self.weight = tk.Entry(parent, font=self.entry_font, width=self.width)
+        self.weight = tk.Entry(parent, font=self.entry_font, width=self.width, justify='center')
         self.weight.pack(pady=8, ipady=8)
 
         # COMBOBOX GENDER
         self.create_label(parent, "Gender:")
         self.gender = ttk.Combobox(parent, values=["Male", "Female"], state="readonly",
-                                   width=self.width, font=self.entry_font)
+                                   width=self.width, font=self.entry_font, justify='center')
         self.gender.current(0)
         self.gender.pack(pady=8, ipady=6)
 
@@ -133,7 +133,7 @@ class App:
                                      values=["Beginner", "Intermediate", "Advanced"],
                                      state="readonly",
                                      width=self.width,
-                                     font=self.entry_font)
+                                     font=self.entry_font, justify='center')
         self.exercise.current(0)
         self.exercise.pack(pady=8, ipady=6)
 
@@ -143,7 +143,7 @@ class App:
                                      values=["Aerobic", "Strength", "Balance", "Flexibility"],
                                      state="readonly",
                                      width=self.width,
-                                     font=self.entry_font)
+                                     font=self.entry_font, justify='center')
         self.category.current(0)
         self.category.pack(pady=8, ipady=6)
 
