@@ -1,85 +1,129 @@
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, messagebox
+from logic import UserData, AppLogic   # IMPORTANT: your logic file must be named logic.py
 
-root = tk.Tk()
-root.title('Group 3 Final Project')
-root.configure(bg="#D0E8F2")
-root.geometry("450x650")
 
-# --- Common font ---
-label_font = ("Arial", 16, "bold")
-entry_font = ("Arial", 14)
-input_width = 25
+class App:
+    def __init__(self, root):
+        self.root = root
+        self.root.title('DisciFit - Fitness Planner')
+        self.root.configure(bg="#D0E8F2")
+        self.root.geometry("450x750")
 
-# --- Main Title ---
-tk.Label(root, text="DisciFit", font=("Arial", 28, "bold"), bg="#D0E8F2").pack(pady=20)
+        self.app_logic = AppLogic(root)
 
-# --- Goal Combobox ---
-tk.Label(root, text="Target Goal:", font=label_font, bg="#D0E8F2").pack(pady=5)
-goal_options = ["Gain", "Loss"]
-goal_combobox = ttk.Combobox(root, values=goal_options, font=entry_font, state="readonly", justify="center", width=input_width)
-goal_combobox.current(0)
-goal_combobox.pack(pady=5)
+        # --- Fonts ---
+        self.label_font = ("Arial", 14, "bold")
+        self.entry_font = ("Arial", 12)
+        self.width = 25
 
-# --- Target Weight ---
-tk.Label(root, text="Set Your Target Weight (kg):", font=label_font, bg="#D0E8F2").pack(pady=5)
-entry1 = tk.Entry(root, font=entry_font, justify="center", width=input_width)
-entry1.pack(pady=5)
+        self.build_ui()
 
-# --- Timeframe ---
-tk.Label(root, text="Enter Your Target Timeframe (Weeks):", font=label_font, bg="#D0E8F2").pack(pady=5)
-entry2 = tk.Entry(root, font=entry_font, justify="center", width=input_width)
-entry2.pack(pady=5)
+    def build_ui(self):
+        tk.Label(
+            self.root,
+            text="DisciFit",
+            font=("Arial", 28, "bold"),
+            bg="#D0E8F2"
+        ).pack(pady=15)
 
-# --- Age ---
-tk.Label(root, text="Enter your age:", font=label_font, bg="#D0E8F2").pack(pady=5)
-entry3 = tk.Entry(root, font=entry_font, justify="center", width=input_width)
-entry3.pack(pady=5)
+        # Goal
+        self.create_label("Target Goal:")
+        self.goal = ttk.Combobox(self.root, values=["Gain", "Loss"], state="readonly", width=self.width)
+        self.goal.current(0)
+        self.goal.pack(pady=5)
 
-# --- Height ---
-tk.Label(root, text="Enter your height in cm:", font=label_font, bg="#D0E8F2").pack(pady=5)
-entry4 = tk.Entry(root, font=entry_font, justify="center", width=input_width)
-entry4.pack(pady=5)
+        # Target weight
+        self.create_label("Target Weight (kg):")
+        self.target_weight = tk.Entry(self.root, font=self.entry_font)
+        self.target_weight.pack(pady=5)
 
-# --- Current Weight ---
-tk.Label(root, text="Enter your current weight in kg:", font=label_font, bg="#D0E8F2").pack(pady=5)
-entry5 = tk.Entry(root, font=entry_font, justify="center", width=input_width)
-entry5.pack(pady=5)
+        # Weeks
+        self.create_label("Target Timeframe (weeks):")
+        self.weeks = tk.Entry(self.root, font=self.entry_font)
+        self.weeks.pack(pady=5)
 
-# --- Gender ---
-tk.Label(root, text="Gender:", font=label_font, bg="#D0E8F2").pack(pady=5)
-gender_options = ["Male", "Female"]
-gender_combobox = ttk.Combobox(root, values=gender_options, font=entry_font, state="readonly", justify="center", width=input_width)
-gender_combobox.current(0)
-gender_combobox.pack(pady=5)
+        # Age
+        self.create_label("Age:")
+        self.age = tk.Entry(self.root, font=self.entry_font)
+        self.age.pack(pady=5)
 
-# --- Exercise Mode ---
-tk.Label(root, text="Select Exercise Mode:", font=label_font, bg="#D0E8F2").pack(pady=5)
-exercise_modes = ["Beginner", "Intermediate", "Advanced"]
-exercise_mode = ttk.Combobox(root, values=exercise_modes, font=entry_font, state="readonly", justify="center", width=input_width)
-exercise_mode.current(0)
-exercise_mode.pack(pady=10)
+        # Height
+        self.create_label("Height (cm):")
+        self.height = tk.Entry(self.root, font=self.entry_font)
+        self.height.pack(pady=5)
 
-# --- Function ---
-def submit_data():
-    print("Goal:", goal_combobox.get())
-    print("Target Weight:", entry1.get())
-    print("Timeframe:", entry2.get())
-    print("Age:", entry3.get())
-    print("Height:", entry4.get())
-    print("Current Weight:", entry5.get())
-    print("Gender:", gender_combobox.get())
-    print("Exercise Mode:", exercise_mode.get())
+        # Weight
+        self.create_label("Current Weight (kg):")
+        self.weight = tk.Entry(self.root, font=self.entry_font)
+        self.weight.pack(pady=5)
 
-# --- Generate Plan Button ---
-submit_btn = tk.Button(
-    text="Generate Plan",
-    font=("Arial", 16, "bold"),
-    bg="#4CAF50",
-    fg="white",
-    width=20,
-    command=submit_data
-)
-submit_btn.pack(pady=20)
+        # Gender
+        self.create_label("Gender:")
+        self.gender = ttk.Combobox(self.root, values=["Male", "Female"], state="readonly", width=self.width)
+        self.gender.current(0)
+        self.gender.pack(pady=5)
 
-root.mainloop()
+        # Exercise mode
+        self.create_label("Exercise Level:")
+        self.exercise = ttk.Combobox(
+            self.root,
+            values=["Beginner", "Intermediate", "Advanced"],
+            state="readonly",
+            width=self.width
+        )
+        self.exercise.current(0)
+        self.exercise.pack(pady=5)
+
+        # Category (IMPORTANT FIX)
+        self.create_label("Workout Category:")
+        self.category = ttk.Combobox(
+            self.root,
+            values=["Aerobic", "Strength", "Balance", "Flexibility"],
+            state="readonly",
+            width=self.width
+        )
+        self.category.current(0)
+        self.category.pack(pady=5)
+
+        # Button
+        tk.Button(
+            self.root,
+            text="Generate Plan",
+            font=("Arial", 14, "bold"),
+            bg="#4CAF50",
+            fg="white",
+            command=self.submit_data
+        ).pack(pady=20)
+
+    def create_label(self, text):
+        tk.Label(self.root, text=text, font=self.label_font, bg="#D0E8F2").pack(pady=3)
+
+    def submit_data(self):
+        try:
+            # Validate inputs
+            user = UserData(
+                goal=self.goal.get(),
+                target_weight=float(self.target_weight.get()),
+                weeks=int(self.weeks.get()),
+                age=int(self.age.get()),
+                height=float(self.height.get()),
+                weight=float(self.weight.get()),
+                gender=self.gender.get(),
+                exercise=self.exercise.get(),
+                category=self.category.get()
+            )
+
+            # Send to logic layer
+            self.app_logic.show_results(user)
+
+        except ValueError:
+            messagebox.showerror("Input Error", "Please enter valid numbers in all fields!")
+        except Exception as e:
+            messagebox.showerror("Error", str(e))
+
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    App(root)
+    root.mainloop()
