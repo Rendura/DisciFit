@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
-from logic import UserData, AppLogic   # IMPORTANT: your logic file must be named logic.py
+from logic import UserData, AppLogic
 
 
 class App:
@@ -8,100 +8,162 @@ class App:
         self.root = root
         self.root.title('DisciFit - Fitness Planner')
         self.root.configure(bg="#D0E8F2")
-        self.root.geometry("450x750")
+        self.root.geometry("500x800")
 
         self.app_logic = AppLogic(root)
 
-        # --- Fonts ---
-        self.label_font = ("Arial", 14, "bold")
-        self.entry_font = ("Arial", 12)
-        self.width = 25
+        # Fonts
+        self.label_font = ("Arial", 16, "bold")
+        self.entry_font = ("Arial", 16)
+        self.width = 30
 
         self.build_ui()
 
+    # ---------------- UI ----------------
     def build_ui(self):
+        container = tk.Frame(self.root, bg="#D0E8F2")
+        container.pack(fill="both", expand=True)
+
+        self.canvas = tk.Canvas(container, bg="#D0E8F2", highlightthickness=0)
+        scrollbar = ttk.Scrollbar(container, orient="vertical", command=self.canvas.yview)
+
+        self.scrollable_frame = tk.Frame(self.canvas, bg="#D0E8F2")
+
+        self.window_id = self.canvas.create_window(
+            (0, 0),
+            window=self.scrollable_frame,
+            anchor="n"
+        )
+
+        self.canvas.configure(yscrollcommand=scrollbar.set)
+
+        self.canvas.pack(side="left", fill="both", expand=True)
+        scrollbar.pack(side="right", fill="y")
+
+        # Resize + center fix
+        self.canvas.bind("<Configure>", self.on_canvas_configure)
+
+        self.scrollable_frame.bind(
+            "<Configure>",
+            lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+        )
+
+        self.canvas.bind_all("<MouseWheel>", self._on_mousewheel)
+        self.root.bind("<Up>", self._scroll_up)
+        self.root.bind("<Down>", self._scroll_down)
+
+        self.build_form(self.scrollable_frame)
+
+    # ---------------- CENTER ----------------
+    def on_canvas_configure(self, event):
+        canvas_width = event.width
+
+        max_width = 550
+        frame_width = min(canvas_width, max_width)
+
+        self.canvas.itemconfig(self.window_id, width=frame_width)
+
+        self.canvas.coords(
+            self.window_id,
+            canvas_width // 2,
+            0
+        )
+
+    # ---------------- SCROLL FUNCTIONS ----------------
+    def _on_mousewheel(self, event):
+        self.canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+
+    def _scroll_up(self, event):
+        self.canvas.yview_scroll(-3, "units")
+
+    def _scroll_down(self, event):
+        self.canvas.yview_scroll(3, "units")
+
+    # ---------------- FORM ----------------
+    def build_form(self, parent):
         tk.Label(
-            self.root,
+            parent,
             text="DisciFit",
-            font=("Arial", 28, "bold"),
+            font=("Arial", 30, "bold"),
             bg="#D0E8F2"
-        ).pack(pady=15)
+        ).pack(pady=20)
 
-        # Goal
-        self.create_label("Target Goal:")
-        self.goal = ttk.Combobox(self.root, values=["Gain", "Loss"], state="readonly", width=self.width)
+        # COMBOBOX TARGET GOAL
+        self.create_label(parent, "Target Goal:")
+        self.goal = ttk.Combobox(parent, values=["Gain", "Loss"], state="readonly",
+                                 width=self.width, font=self.entry_font)
         self.goal.current(0)
-        self.goal.pack(pady=5)
+        self.goal.pack(pady=8, ipady=6)
 
-        # Target weight
-        self.create_label("Target Weight (kg):")
-        self.target_weight = tk.Entry(self.root, font=self.entry_font)
-        self.target_weight.pack(pady=5)
+        # USER INPUT TARGET WEIGHT
+        self.create_label(parent, "Target Weight (kg):")
+        self.target_weight = tk.Entry(parent, font=self.entry_font, width=self.width)
+        self.target_weight.pack(pady=8, ipady=8)
 
-        # Weeks
-        self.create_label("Target Timeframe (weeks):")
-        self.weeks = tk.Entry(self.root, font=self.entry_font)
-        self.weeks.pack(pady=5)
+        # USER INPUT TARGET TIME FRAME
+        self.create_label(parent, "Target Timeframe (weeks):")
+        self.weeks = tk.Entry(parent, font=self.entry_font, width=self.width)
+        self.weeks.pack(pady=8, ipady=8)
 
-        # Age
-        self.create_label("Age:")
-        self.age = tk.Entry(self.root, font=self.entry_font)
-        self.age.pack(pady=5)
+        # USER INPUT AGE
+        self.create_label(parent, "Age:")
+        self.age = tk.Entry(parent, font=self.entry_font, width=self.width)
+        self.age.pack(pady=8, ipady=8)
 
-        # Height
-        self.create_label("Height (cm):")
-        self.height = tk.Entry(self.root, font=self.entry_font)
-        self.height.pack(pady=5)
+        # USER INPUT HEIGHT
+        self.create_label(parent, "Height (cm):")
+        self.height = tk.Entry(parent, font=self.entry_font, width=self.width)
+        self.height.pack(pady=8, ipady=8)
 
-        # Weight
-        self.create_label("Current Weight (kg):")
-        self.weight = tk.Entry(self.root, font=self.entry_font)
-        self.weight.pack(pady=5)
+        # USER INPUT CURRENT WEIGHT
+        self.create_label(parent, "Current Weight (kg):")
+        self.weight = tk.Entry(parent, font=self.entry_font, width=self.width)
+        self.weight.pack(pady=8, ipady=8)
 
-        # Gender
-        self.create_label("Gender:")
-        self.gender = ttk.Combobox(self.root, values=["Male", "Female"], state="readonly", width=self.width)
+        # COMBOBOX GENDER
+        self.create_label(parent, "Gender:")
+        self.gender = ttk.Combobox(parent, values=["Male", "Female"], state="readonly",
+                                   width=self.width, font=self.entry_font)
         self.gender.current(0)
-        self.gender.pack(pady=5)
+        self.gender.pack(pady=8, ipady=6)
 
-        # Exercise mode
-        self.create_label("Exercise Level:")
-        self.exercise = ttk.Combobox(
-            self.root,
-            values=["Beginner", "Intermediate", "Advanced"],
-            state="readonly",
-            width=self.width
-        )
+        # COMBOBOX EXERCISE LEVEL
+        self.create_label(parent, "Exercise Level:")
+        self.exercise = ttk.Combobox(parent,
+                                     values=["Beginner", "Intermediate", "Advanced"],
+                                     state="readonly",
+                                     width=self.width,
+                                     font=self.entry_font)
         self.exercise.current(0)
-        self.exercise.pack(pady=5)
+        self.exercise.pack(pady=8, ipady=6)
 
-        # Category (IMPORTANT FIX)
-        self.create_label("Workout Category:")
-        self.category = ttk.Combobox(
-            self.root,
-            values=["Aerobic", "Strength", "Balance", "Flexibility"],
-            state="readonly",
-            width=self.width
-        )
+        # COMBOBOX WORKOUT CATEGORY
+        self.create_label(parent, "Workout Category:")
+        self.category = ttk.Combobox(parent,
+                                     values=["Aerobic", "Strength", "Balance", "Flexibility"],
+                                     state="readonly",
+                                     width=self.width,
+                                     font=self.entry_font)
         self.category.current(0)
-        self.category.pack(pady=5)
+        self.category.pack(pady=8, ipady=6)
 
-        # Button
+        # BUTTON
         tk.Button(
-            self.root,
+            parent,
             text="Generate Plan",
-            font=("Arial", 14, "bold"),
+            font=("Arial", 18, "bold"),
             bg="#4CAF50",
             fg="white",
             command=self.submit_data
-        ).pack(pady=20)
+        ).pack(pady=30, ipadx=15, ipady=12)
 
-    def create_label(self, text):
-        tk.Label(self.root, text=text, font=self.label_font, bg="#D0E8F2").pack(pady=3)
+    # ---------------- LABEL ----------------
+    def create_label(self, parent, text):
+        tk.Label(parent, text=text, font=self.label_font, bg="#D0E8F2").pack(pady=5)
 
+    # ---------------- LOGIC ----------------
     def submit_data(self):
         try:
-            # Validate inputs
             user = UserData(
                 goal=self.goal.get(),
                 target_weight=float(self.target_weight.get()),
@@ -114,7 +176,6 @@ class App:
                 category=self.category.get()
             )
 
-            # Send to logic layer
             self.app_logic.show_results(user)
 
         except ValueError:
