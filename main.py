@@ -164,22 +164,69 @@ class App:
     # ---------------- LOGIC ----------------
     def submit_data(self):
         try:
+            # ---------------- CONVERSION ----------------
+            target_weight = float(self.target_weight.get())
+            weeks = int(self.weeks.get())
+            age = int(self.age.get())
+            height = float(self.height.get())
+            current_weight = float(self.weight.get())
+
+            # ---------------- VALIDATION RULES ----------------
+
+            if not (0 < target_weight <= 300):
+                messagebox.showerror(
+                    "Invalid Target Weight",
+                    "Target Weight must be between 1 and 300 kg"
+                )
+                return
+
+            if not (0 < weeks <= 52):
+                messagebox.showerror(
+                    "Invalid Timeframe",
+                    "Target Timeframe must be between 1 and 52 weeks"
+                )
+                return
+
+            if not (0 < age <= 100):
+                messagebox.showerror(
+                    "Invalid Age",
+                    "Age must be between 1 and 100 years"
+                )
+                return
+
+            if not (0 < height <= 300):
+                messagebox.showerror(
+                    "Invalid Height",
+                    "Height must be between 1 and 300 cm"
+                )
+                return
+
+            if not (0 < current_weight <= 300):
+                messagebox.showerror(
+                    "Invalid Weight",
+                    "Current Weight must be between 1 and 300 kg"
+                )
+                return
+
+            # ---------------- CREATE USER OBJECT ----------------
             user = UserData(
                 goal=self.goal.get(),
-                target_weight=float(self.target_weight.get()),
-                weeks=int(self.weeks.get()),
-                age=int(self.age.get()),
-                height=float(self.height.get()),
-                weight=float(self.weight.get()),
+                target_weight=target_weight,
+                weeks=weeks,
+                age=age,
+                height=height,
+                weight=current_weight,
                 gender=self.gender.get(),
                 exercise=self.exercise.get(),
                 category=self.category.get()
             )
 
-            self.app_logic.show_results(user)
-
         except ValueError:
-            messagebox.showerror("Input Error", "Please enter valid numbers in all fields!")
+            messagebox.showerror(
+                "Input Error",
+                "Please enter valid numbers in all fields!"
+            )
+
         except Exception as e:
             messagebox.showerror("Error", str(e))
 
