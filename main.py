@@ -221,6 +221,9 @@ class App:
                 category=self.category.get()
             )
 
+            # Send to logic layer
+            self.app_logic.show_results(user)
+
         except ValueError:
             messagebox.showerror(
                 "Input Error",
