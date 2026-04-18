@@ -40,7 +40,6 @@ class App:
         self.canvas.pack(side="left", fill="both", expand=True)
         scrollbar.pack(side="right", fill="y")
 
-        # Resize + center fix
         self.canvas.bind("<Configure>", self.on_canvas_configure)
 
         self.scrollable_frame.bind(
@@ -57,19 +56,13 @@ class App:
     # ---------------- CENTER ----------------
     def on_canvas_configure(self, event):
         canvas_width = event.width
-
         max_width = 550
         frame_width = min(canvas_width, max_width)
 
         self.canvas.itemconfig(self.window_id, width=frame_width)
+        self.canvas.coords(self.window_id, canvas_width // 2, 0)
 
-        self.canvas.coords(
-            self.window_id,
-            canvas_width // 2,
-            0
-        )
-
-    # ---------------- SCROLL FUNCTIONS ----------------
+    # ---------------- SCROLL ----------------
     def _on_mousewheel(self, event):
         self.canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
 
@@ -81,53 +74,48 @@ class App:
 
     # ---------------- FORM ----------------
     def build_form(self, parent):
-        tk.Label(
-            parent,
-            text="DisciFit",
-            font=("Arial", 30, "bold"),
-            bg="#D0E8F2"
-        ).pack(pady=20)
+        tk.Label(parent, text="DisciFit", font=("Arial", 30, "bold"), bg="#D0E8F2").pack(pady=20)
 
-        # COMBOBOX TARGET GOAL
+        # Goal
         self.create_label(parent, "Target Goal:")
         self.goal = ttk.Combobox(parent, values=["Gain", "Loss"], state="readonly",
                                  width=self.width, font=self.entry_font, justify='center')
         self.goal.current(0)
         self.goal.pack(pady=8, ipady=6)
 
-        # USER INPUT TARGET WEIGHT
+        # Target Weight
         self.create_label(parent, "Target Weight (kg):")
         self.target_weight = tk.Entry(parent, font=self.entry_font, width=self.width, justify='center')
         self.target_weight.pack(pady=8, ipady=8)
 
-        # USER INPUT TARGET TIME FRAME
+        # Weeks
         self.create_label(parent, "Target Timeframe (weeks):")
         self.weeks = tk.Entry(parent, font=self.entry_font, width=self.width, justify='center')
         self.weeks.pack(pady=8, ipady=8)
 
-        # USER INPUT AGE
+        # Age
         self.create_label(parent, "Age:")
         self.age = tk.Entry(parent, font=self.entry_font, width=self.width, justify='center')
         self.age.pack(pady=8, ipady=8)
 
-        # USER INPUT HEIGHT
+        # Height
         self.create_label(parent, "Height (cm):")
         self.height = tk.Entry(parent, font=self.entry_font, width=self.width, justify='center')
         self.height.pack(pady=8, ipady=8)
 
-        # USER INPUT CURRENT WEIGHT
+        # Weight
         self.create_label(parent, "Current Weight (kg):")
         self.weight = tk.Entry(parent, font=self.entry_font, width=self.width, justify='center')
         self.weight.pack(pady=8, ipady=8)
 
-        # COMBOBOX GENDER
+        # Gender
         self.create_label(parent, "Gender:")
         self.gender = ttk.Combobox(parent, values=["Male", "Female"], state="readonly",
                                    width=self.width, font=self.entry_font, justify='center')
         self.gender.current(0)
         self.gender.pack(pady=8, ipady=6)
 
-        # COMBOBOX EXERCISE LEVEL
+        # Exercise Level
         self.create_label(parent, "Exercise Level:")
         self.exercise = ttk.Combobox(parent,
                                      values=["Beginner", "Intermediate", "Advanced"],
@@ -137,17 +125,29 @@ class App:
         self.exercise.current(0)
         self.exercise.pack(pady=8, ipady=6)
 
-        # COMBOBOX WORKOUT CATEGORY
+        # ---------------- MULTI-SELECT CATEGORY ----------------
         self.create_label(parent, "Workout Category:")
-        self.category = ttk.Combobox(parent,
-                                     values=["Aerobic", "Strength", "Balance", "Flexibility"],
-                                     state="readonly",
-                                     width=self.width,
-                                     font=self.entry_font, justify='center')
-        self.category.current(0)
-        self.category.pack(pady=8, ipady=6)
 
-        # BUTTON
+        self.category_frame = tk.Frame(parent, bg="#D0E8F2")
+        self.category_frame.pack(pady=8)
+
+        self.category_options = ["Aerobic", "Strength", "Balance", "Flexibility"]
+        self.category_vars = {}
+
+        for option in self.category_options:
+            var = tk.BooleanVar()
+            chk = tk.Checkbutton(
+                self.category_frame,
+                text=option,
+                variable=var,
+                font=self.entry_font,
+                bg="#D0E8F2",
+                activebackground="#D0E8F2"
+            )
+            chk.pack(anchor="center")
+            self.category_vars[option] = var
+
+        # Button
         tk.Button(
             parent,
             text="Generate Plan",
@@ -164,72 +164,73 @@ class App:
     # ---------------- LOGIC ----------------
     def submit_data(self):
         try:
-            # ---------------- CONVERSION ----------------
             target_weight = float(self.target_weight.get())
             weeks = int(self.weeks.get())
             age = int(self.age.get())
             height = float(self.height.get())
             current_weight = float(self.weight.get())
 
-            # ---------------- VALIDATION RULES ----------------
+            goal_value = self.goal.get()
 
+            # -------- VALIDATION --------
             if not (0 < target_weight <= 300):
-                messagebox.showerror(
-                    "Invalid Target Weight",
-                    "Target Weight must be between 1 and 300 kg"
-                )
+                messagebox.showerror("Invalid Target Weight", "1–300 kg only")
                 return
 
-            if not (0 < weeks <= 52):
-                messagebox.showerror(
-                    "Invalid Timeframe",
-                    "Target Timeframe must be between 1 and 52 weeks"
-                )
+            if goal_value == "Gain" and target_weight <= current_weight:
+                messagebox.showerror("Invalid Goal", "Target must be GREATER than current weight")
                 return
 
-            if not (0 < age <= 100):
-                messagebox.showerror(
-                    "Invalid Age",
-                    "Age must be between 1 and 100 years"
-                )
+            if goal_value == "Loss" and target_weight >= current_weight:
+                messagebox.showerror("Invalid Goal", "Target must be LESS than current weight")
+                return
+
+            if not (4 <= weeks <= 52):
+                messagebox.showerror("Invalid Timeframe", "4–52 weeks only")
+                return
+
+            if not (17 <= age <= 100):
+                messagebox.showerror("Invalid Age", "17–100 only")
                 return
 
             if not (0 < height <= 300):
-                messagebox.showerror(
-                    "Invalid Height",
-                    "Height must be between 1 and 300 cm"
-                )
+                messagebox.showerror("Invalid Height", "1–300 cm only")
                 return
 
             if not (0 < current_weight <= 300):
-                messagebox.showerror(
-                    "Invalid Weight",
-                    "Current Weight must be between 1 and 300 kg"
-                )
+                messagebox.showerror("Invalid Weight", "1–300 kg only")
                 return
 
-            # ---------------- CREATE USER OBJECT ----------------
+            # -------- GENDER --------
+            gender_map = {"Male": "M", "Female": "F"}
+            gender_value = gender_map[self.gender.get()]
+
+            # -------- MULTI CATEGORY --------
+            selected_categories = [
+                key.lower() for key, var in self.category_vars.items() if var.get()
+            ]
+
+            if not selected_categories:
+                messagebox.showerror("Invalid Category", "Please select at least one workout category")
+                return
+
+            # -------- CREATE USER --------
             user = UserData(
-                goal=self.goal.get(),
+                goal=goal_value.lower(),
                 target_weight=target_weight,
                 weeks=weeks,
                 age=age,
                 height=height,
                 weight=current_weight,
-                gender=self.gender.get(),
-                exercise=self.exercise.get(),
-                category=self.category.get()
+                gender=gender_value,
+                exercise=self.exercise.get().lower(),
+                category=selected_categories
             )
 
-            # Send to logic layer
             self.app_logic.show_results(user)
 
         except ValueError:
-            messagebox.showerror(
-                "Input Error",
-                "Please enter valid numbers in all fields!"
-            )
-
+            messagebox.showerror("Input Error", "Please enter valid numbers!")
         except Exception as e:
             messagebox.showerror("Error", str(e))
 

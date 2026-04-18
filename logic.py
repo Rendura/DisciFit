@@ -14,15 +14,19 @@ class UserData:
         self.age = int(age)
         self.height = float(height)
         self.weight = float(weight)
-        self.gender = gender
-        self.exercise = exercise.lower()      
-        self.category = category.lower()
+        self.gender = gender.upper()
+        self.exercise = exercise.lower()
+
+        if isinstance(category, list):
+            self.category = [c.lower() for c in category]
+        else:
+            self.category = [category.lower()]
 
 
 # -----------------------------
-# FITNESS CALCULATOR
+# FITNESS SYSTEM
 # -----------------------------
-class FitnessCalculator:
+class FitnessSystem:
     def __init__(self, user):
         self.user = user
 
@@ -41,7 +45,6 @@ class FitnessCalculator:
                 'beginner': ['Single Leg Stand', 'Heel-to-Toe Walk'],
                 'intermediate': ['Single Leg Stand', 'Tree Pose', 'Side Leg Raises'],
                 'advanced': ['Single Leg Pistol Squat', 'BOSU Ball Stand', 'Single Leg Deadlift', 'Warrior III']
-
             },
             'flexibility': {
                 'beginner': ['Seated Forward Bend', 'Cat-Cow Stretch'],
@@ -57,9 +60,9 @@ class FitnessCalculator:
         }
 
         self.foods = {
-            'protein': ['Chicken breast', 'Eggs', 'Tuna'],
-            'carbs': ['Rice', 'Oats', 'Banana'],
-            'fats': ['Avocado', 'Peanut butter', 'Nuts']
+            'protein': ['Chicken breast (100g)', 'Eggs (2 large)', 'Greek yogurt (150g)', 'Tuna (100g)', 'Whey protein (1 scoop)'],
+            'carbs': ['Oats (50g)', 'Sweet potato (200g)', 'Brown rice (100g)', 'Quinoa (100g)', 'Banana (1 large)'],
+            'fats': ['Avocado (1/2)', 'Almonds (30g)', 'Olive oil (1 tbsp)', 'Peanut butter (1 tbsp)', 'Salmon (100g)']
         }
 
     # -----------------------------
@@ -69,19 +72,14 @@ class FitnessCalculator:
         return self.user.weight / ((self.user.height / 100) ** 2)
 
     def bmr(self):
-        if self.user.gender == "Male":
-            return 10 * self.user.weight + 6.25 * self.user.height - 5 * self.user.age + 5
+        if self.user.gender == "M":
+            return 88.362 + (13.397 * self.user.weight) + (4.799 * self.user.height) - (5.677 * self.user.age)
         else:
-            return 10 * self.user.weight + 6.25 * self.user.height - 5 * self.user.age - 161
+            return 447.593 + (9.247 * self.user.weight) + (3.098 * self.user.height) - (4.330 * self.user.age)
 
     def calories(self):
-        activity_map = {
-            "beginner": 1.2,
-            "intermediate": 1.55,
-            "advanced": 1.9
-        }
-
-        tdee = self.bmr() * activity_map[self.user.exercise]
+        activity = {'beginner': 1.2, 'intermediate': 1.55, 'advanced': 1.9}
+        tdee = self.bmr() * activity[self.user.exercise]
 
         if self.user.goal == "loss":
             return tdee - 500
@@ -95,32 +93,53 @@ class FitnessCalculator:
             "fats": cal * 0.3 / 9
         }
 
-    # -----------------------------
-    # DATA ACCESS
-    # -----------------------------
-    def get_foods(self):
-        return self.foods
+    def get_exercises(self):
+        result = []
+        for c in self.user.category:
+            if c in self.exercises:
+                result.extend(self.exercises[c][self.user.exercise])
+        return list(dict.fromkeys(result))
 
-    def get_workout_plan(self):
-        category = self.user.category
-        level = self.user.exercise
-
-        if category not in self.exercises:
-            raise ValueError("Invalid workout category")
-
-        if level not in self.exercises[category]:
-            raise ValueError("Invalid exercise level")
-
-        return {
-            "category": category,
-            "level": level,
-            "exercises": self.exercises[category][level],
-            "sets_reps": self.sets_reps[level]
-        }
+    def get_sets_reps(self):
+        return self.sets_reps[self.user.exercise]
 
 
 # -----------------------------
-# APP LOGIC (GUI)
+# GRAPH
+# -----------------------------
+def show_graph(macros):
+    labels = ["Protein", "Carbs", "Fats"]
+    values = [macros["protein"], macros["carbs"], macros["fats"]]
+
+    plt.figure()
+    plt.bar(labels, values)
+    plt.title("Macronutrient Distribution")
+    plt.show()
+
+
+# -----------------------------
+# PROGRESS GRAPH
+# -----------------------------
+def show_progress_graph(start_weight, target_weight, weeks, finished):
+    import numpy as np
+
+    if weeks <= 0:
+        weeks = 1
+
+    weights = np.linspace(start_weight, target_weight, weeks)
+    title = "Completed Progress" if finished else "Partial Progress"
+
+    plt.figure()
+    plt.plot(range(1, weeks + 1), weights, marker='o')
+    plt.xlabel("Weeks")
+    plt.ylabel("Weight (kg)")
+    plt.title(title)
+    plt.grid()
+    plt.show()
+
+
+# -----------------------------
+# APP LOGIC AND RESULTS
 # -----------------------------
 class AppLogic:
     def __init__(self, root):
@@ -128,64 +147,122 @@ class AppLogic:
 
     def show_results(self, user):
         try:
-            calc = FitnessCalculator(user)
+            system = FitnessSystem(user)
 
-            bmi = calc.bmi()
-            calories = calc.calories()
-            macros = calc.macros()
-            plan = calc.get_workout_plan()
+            bmi = system.bmi()
+            calories = system.calories()
+            macros = system.macros()
+            exercises = system.get_exercises()
+            sr = system.get_sets_reps()
 
+            # ---------------- WINDOW ----------------
             win = tk.Toplevel(self.root)
-            win.title("Fitness Plan")
-            win.geometry("520x720")
+            win.title("DisciFit Results")
+            win.configure(bg="#D0E8F2")
+            win.geometry("500x700")
 
-            def label(text, bold=False):
-                font = ("Arial", 14, "bold") if bold else ("Arial", 12)
-                tk.Label(win, text=text, font=font).pack(pady=2)
+            # ---------------- SCROLL ----------------
+            container = tk.Frame(win, bg="#D0E8F2")
+            container.pack(fill="both", expand=True)
 
-            # ---------------- BASIC ----------------
-            label(f"BMI: {bmi:.2f}", True)
-            label(f"Calories: {calories:.0f}")
+            canvas = tk.Canvas(container, bg="#D0E8F2", highlightthickness=0)
+            scrollbar = tk.Scrollbar(container, orient="vertical", command=canvas.yview)
 
-            # ---------------- MACROS ----------------
-            label("Macros:", True)
-            label(f"Protein: {macros['protein']:.0f}g")
-            label(f"Carbs: {macros['carbs']:.0f}g")
-            label(f"Fats: {macros['fats']:.0f}g")
+            scrollable_frame = tk.Frame(canvas, bg="#D0E8F2")
 
-            # ---------------- WORKOUT ----------------
-            label("Workout Plan:", True)
-            label(f"Category: {plan['category'].capitalize()}")
-            label(f"Level: {plan['level'].capitalize()}")
+            window_id = canvas.create_window((0, 0), window=scrollable_frame, anchor="n")
 
-            label("Exercises:")
-            for ex in plan['exercises']:
-                label(f"• {ex}")
+            canvas.configure(yscrollcommand=scrollbar.set)
 
-            sr = plan['sets_reps']
-            label("Sets / Reps:", True)
-            label(f"Sets: {sr['sets']}")
-            label(f"Reps: {sr['reps']}")
-            label(f"Duration: {sr['duration']}")
+            canvas.pack(side="left", fill="both", expand=True)
+            scrollbar.pack(side="right", fill="y")
 
-            # ---------------- FOOD ----------------
-            label("Food Suggestions:", True)
-            for macro, foods in calc.get_foods().items():
-                label(f"{macro.capitalize()}: {', '.join(foods)}")
+            def on_canvas_configure(event):
+                canvas_width = event.width
+                max_width = 550
+                frame_width = min(canvas_width, max_width)
 
-            # ---------------- GRAPH ----------------
-            self.show_graph(macros)
+                canvas.itemconfig(window_id, width=frame_width)
+                canvas.coords(window_id, canvas_width // 2, 0)
+
+            canvas.bind("<Configure>", on_canvas_configure)
+
+            scrollable_frame.bind(
+                "<Configure>",
+                lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+            )
+
+            canvas.bind_all("<MouseWheel>", lambda e: canvas.yview_scroll(int(-1 * (e.delta / 120)), "units"))
+            win.bind("<Up>", lambda e: canvas.yview_scroll(-3, "units"))
+            win.bind("<Down>", lambda e: canvas.yview_scroll(3, "units"))
+
+            parent = scrollable_frame
+
+            # ---------------- CONTENT ----------------
+            tk.Label(parent, text="FITNESS RESULT", font=("Arial", 18, "bold"), bg="#D0E8F2").pack(pady=10)
+
+            tk.Label(parent, text=f"BMI: {bmi:.2f}", bg="#D0E8F2", font=("Arial", 12)).pack()
+            tk.Label(parent, text=f"Calories: {calories:.0f} kcal", bg="#D0E8F2", font=("Arial", 12)).pack()
+
+            tk.Label(parent, text="\nMACRONUTRIENTS", bg="#D0E8F2", font=("Arial", 14, "bold")).pack()
+            tk.Label(parent,
+                     text=f"Protein: {macros['protein']:.0f}g\nCarbs: {macros['carbs']:.0f}g\nFats: {macros['fats']:.0f}g",
+                     bg="#D0E8F2", font=("Arial", 11)).pack()
+
+            tk.Label(parent, text="\nWORKOUT PLAN", bg="#D0E8F2", font=("Arial", 14, "bold")).pack()
+            tk.Label(parent,
+                     text="\n".join([f"• {ex}" for ex in exercises]),
+                     bg="#D0E8F2", font=("Arial", 11)).pack()
+
+            tk.Label(parent,
+                     text=f"\nSets: {sr['sets']} | Reps: {sr['reps']}",
+                     bg="#D0E8F2", font=("Arial", 11, "bold")).pack()
+
+            tk.Label(parent, text="\nFOOD SUGGESTIONS", bg="#D0E8F2", font=("Arial", 14, "bold")).pack()
+            food_text = ""
+            for k, v in system.foods.items():
+                food_text += f"{k.upper()}: {', '.join(v)}\n"
+
+            tk.Label(parent, text=food_text, bg="#D0E8F2", font=("Arial", 11)).pack()
+
+            tk.Button(parent, text="Show Macronutrient Distribution Graph", bg="#4CAF50", fg="white",
+                      font=("Arial", 11, "bold"),
+                      command=lambda: show_graph(macros)).pack(pady=10)
+
+            # ---------------- WEEK TRACKER ----------------
+            tk.Label(parent, text="\nMark Completed Weeks:", bg="#D0E8F2",
+                     font=("Arial", 12, "bold")).pack(pady=10)
+
+            weeks_frame = tk.Frame(parent, bg="#D0E8F2")
+            weeks_frame.pack()
+
+            week_vars = []
+
+            for i in range(user.weeks):
+                var = tk.BooleanVar()
+                tk.Checkbutton(
+                    weeks_frame,
+                    text=f"Week {i+1}",
+                    variable=var,
+                    bg="#D0E8F2",
+                    font=("Arial", 10)
+                ).pack(anchor="w")
+                week_vars.append(var)
+
+            def check_progress():
+                completed = sum(var.get() for var in week_vars)
+
+                if completed == user.weeks:
+                    show_progress_graph(user.weight, user.target_weight, user.weeks, True)
+                else:
+                    messagebox.showwarning(
+                        "Incomplete",
+                        f"You only completed {completed}/{user.weeks} weeks."
+                    )
+
+            tk.Button(parent, text="Show Progress", bg="#2196F3", fg="white",
+                      font=("Arial", 11, "bold"),
+                      command=check_progress).pack(pady=15)
 
         except Exception as e:
             messagebox.showerror("Error", str(e))
-
-    def show_graph(self, macros):
-        labels = ["Protein", "Carbs", "Fats"]
-        values = [macros["protein"], macros["carbs"], macros["fats"]]
-
-        plt.figure()
-        plt.bar(labels, values)
-        plt.title("Macronutrient Distribution")
-        plt.xlabel("Macronutrients")
-        plt.ylabel("Grams")
-        plt.show()
