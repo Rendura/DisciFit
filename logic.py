@@ -1,21 +1,19 @@
 import tkinter as tk
 from tkinter import messagebox
 import matplotlib.pyplot as plt
+import numpy as np
 
-
-# -----------------------------
 # USER DATA
-# -----------------------------
 class UserData:
     def __init__(self, goal, target_weight, weeks, age, height, weight, gender, exercise, category):
-        self.goal = goal.lower()
+        self.goal = goal.lower()  # "gain" or "loss"
         self.target_weight = float(target_weight)
         self.weeks = int(weeks)
         self.age = int(age)
         self.height = float(height)
         self.weight = float(weight)
-        self.gender = gender.upper()
-        self.exercise = exercise.lower()
+        self.gender = gender.upper()  # "M" or "F"
+        self.exercise = exercise.lower()  # beginner/intermediate/advanced
 
         if isinstance(category, list):
             self.category = [c.lower() for c in category]
@@ -30,6 +28,7 @@ class FitnessSystem:
     def __init__(self, user):
         self.user = user
 
+        # EXERCISES
         self.exercises = {
             'aerobic': {
                 'beginner': ['Brisk Walking', 'Stationary Bike', 'Marching in Place'],
@@ -53,12 +52,14 @@ class FitnessSystem:
             }
         }
 
+        # SETS / REPS
         self.sets_reps = {
             'beginner': {'sets': 2, 'reps': '10-15', 'duration': '20-30s'},
             'intermediate': {'sets': 3, 'reps': '8-12', 'duration': '30-45s'},
             'advanced': {'sets': 4, 'reps': '6-10', 'duration': '45-60s'}
         }
 
+        # FOOD LIST
         self.foods = {
             'protein': ['Chicken breast (100g)', 'Eggs (2 large)', 'Greek yogurt (150g)', 'Tuna (100g)', 'Whey protein (1 scoop)'],
             'carbs': ['Oats (50g)', 'Sweet potato (200g)', 'Brown rice (100g)', 'Quinoa (100g)', 'Banana (1 large)'],
@@ -81,16 +82,43 @@ class FitnessSystem:
         activity = {'beginner': 1.2, 'intermediate': 1.55, 'advanced': 1.9}
         tdee = self.bmr() * activity[self.user.exercise]
 
-        if self.user.goal == "loss":
+        if self.user.goal == "gain":
+            return tdee + 500
+        else:  # loss
             return tdee - 500
-        return tdee + 500
 
     def macros(self):
         cal = self.calories()
+
+        # Goal-based macro distribution
+        if self.user.goal == "gain":
+            ratios = {'protein': 0.30, 'carbs': 0.50, 'fats': 0.20}
+        else:
+            ratios = {'protein': 0.35, 'carbs': 0.40, 'fats': 0.25}
+
         return {
-            "protein": cal * 0.3 / 4,
-            "carbs": cal * 0.4 / 4,
-            "fats": cal * 0.3 / 9
+            "protein": round(cal * ratios['protein'] / 4),
+            "carbs": round(cal * ratios['carbs'] / 4),
+            "fats": round(cal * ratios['fats'] / 9)
+        }
+
+    # EXERCISE FUNCTIONS
+    def get_exercises(self):
+        result = []
+        for c in self.user.category:
+            if c in self.exercises:
+                result.extend(self.exercises[c][self.user.exercise])
+        return list(dict.fromkeys(result))
+
+    def get_sets_reps(self):
+        return self.sets_reps[self.user.exercise]
+
+    # FOOD SUGGESTIONS
+    def get_foods(self):
+        return {
+            "protein": self.foods['protein'][:3],
+            "carbs": self.foods['carbs'][:3],
+            "fats": self.foods['fats'][:3]
         }
 
     def get_exercises(self):
@@ -104,9 +132,7 @@ class FitnessSystem:
         return self.sets_reps[self.user.exercise]
 
 
-# -----------------------------
 # GRAPH
-# -----------------------------
 def show_graph(macros):
     labels = ["Protein", "Carbs", "Fats"]
     values = [macros["protein"], macros["carbs"], macros["fats"]]
@@ -117,11 +143,8 @@ def show_graph(macros):
     plt.show()
 
 
-# -----------------------------
-# PROGRESS GRAPH
-# -----------------------------
+#  EXERCISE PROGRESS GRAPH
 def show_progress_graph(start_weight, target_weight, weeks, finished):
-    import numpy as np
 
     if weeks <= 0:
         weeks = 1
@@ -137,10 +160,7 @@ def show_progress_graph(start_weight, target_weight, weeks, finished):
     plt.grid()
     plt.show()
 
-
-# -----------------------------
-# APP LOGIC AND RESULTS
-# -----------------------------
+# ANOTHER UI LOGIC AND RESULTS
 class AppLogic:
     def __init__(self, root):
         self.root = root
@@ -208,6 +228,11 @@ class AppLogic:
             tk.Label(parent,
                      text=f"Protein: {macros['protein']:.0f}g\nCarbs: {macros['carbs']:.0f}g\nFats: {macros['fats']:.0f}g",
                      bg="#D0E8F2", font=("Arial", 11)).pack()
+            tk.Label(parent, 
+                     text="\nWhat is MACRONUTRIENTS?" , bg="#D0E8F2", font=("Arial", 14, "bold")).pack()
+            tk.Label(parent,
+                     text="These are your daily macronutrient targets based on your goal and activity level. \n PROTEIN helps build muscle, CARBS provide energy, and FATS support overall health. \n Adjust your food intake to meet these targets for optimal results.",
+                     bg="#D0E8F2", font=("Arial", 11)).pack()
 
             tk.Label(parent, text="\nWORKOUT PLAN", bg="#D0E8F2", font=("Arial", 14, "bold")).pack()
             tk.Label(parent,
@@ -218,12 +243,26 @@ class AppLogic:
                      text=f"\nSets: {sr['sets']} | Reps: {sr['reps']}",
                      bg="#D0E8F2", font=("Arial", 11, "bold")).pack()
 
-            tk.Label(parent, text="\nFOOD SUGGESTIONS", bg="#D0E8F2", font=("Arial", 14, "bold")).pack()
+            tk.Label(
+                    parent,
+                    text="\nFOOD SUGGESTIONS",
+                    bg="#D0E8F2",
+                    font=("Arial", 14, "bold")
+                ).pack(fill="x")
+
             food_text = ""
             for k, v in system.foods.items():
                 food_text += f"{k.upper()}: {', '.join(v)}\n"
 
-            tk.Label(parent, text=food_text, bg="#D0E8F2", font=("Arial", 11)).pack()
+            tk.Label(
+                    parent,
+                    text=food_text,
+                    bg="#D0E8F2",
+                    font=("Arial", 11),
+                    wraplength=400,   
+                    justify="center",   
+                    anchor="w"     
+                ).pack()
 
             tk.Button(parent, text="Show Macronutrient Distribution Graph", bg="#4CAF50", fg="white",
                       font=("Arial", 11, "bold"),
