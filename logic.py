@@ -232,7 +232,7 @@ class AppLogic:
                      text="\nWhat is MACRONUTRIENTS?" , bg="#D0E8F2", font=("Arial", 14, "bold")).pack()
             tk.Label(parent,
                      text="These are your daily macronutrient targets based on your goal and activity level. \n PROTEIN helps build muscle, CARBS provide energy, and FATS support overall health. \n Adjust your food intake to meet these targets for optimal results.",
-                     bg="#D0E8F2", font=("Arial", 11)).pack()
+                     bg="#D0E8F2", font=("Arial", 11), wraplength=400, justify="center", anchor="w").pack()
 
             tk.Label(parent, text="\nWORKOUT PLAN", bg="#D0E8F2", font=("Arial", 14, "bold")).pack()
             tk.Label(parent,
