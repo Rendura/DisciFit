@@ -1,6 +1,7 @@
 import sys
 import matplotlib.pyplot as plt
 import numpy as np
+from tabulate import tabulate
 
 # ─────────────────────────────────────────
 #  USER DATA
@@ -269,25 +270,47 @@ def display_results(user: UserData):
 
     header("FITNESS RESULTS")
 
-    print(f"\n  BMI      : {bmi:.2f}")
-    print(f"  Calories : {calories:.0f} kcal/day")
+    # ── Summary table ─────────────────────
+    summary_data = [
+        ["BMI",      f"{bmi:.2f}"],
+        ["Calories", f"{calories:.0f} kcal/day"],
+    ]
+    print()
+    print(tabulate(summary_data, headers=["Metric", "Value"], tablefmt="rounded_outline"))
 
+    # ── Macronutrients table ──────────────
     section("MACRONUTRIENTS")
-    print(f"  Protein  : {macros['protein']}g")
-    print(f"  Carbs    : {macros['carbs']}g")
-    print(f"  Fats     : {macros['fats']}g")
+    macro_data = [
+        ["Protein", f"{macros['protein']}g", "Builds muscle"],
+        ["Carbs",   f"{macros['carbs']}g",   "Provides energy"],
+        ["Fats",    f"{macros['fats']}g",    "Supports health"],
+    ]
+    print()
+    print(tabulate(macro_data, headers=["Macro", "Daily Target", "Role"], tablefmt="rounded_outline"))
     print()
     print("  These are your daily targets based on your goal and activity level.")
-    print("  PROTEIN builds muscle | CARBS provide energy | FATS support health.")
 
+    # ── Workout plan table ────────────────
     section("WORKOUT PLAN")
-    for ex in exercises:
-        print(f"  • {ex}")
-    print(f"\n  Sets: {sr['sets']}  |  Reps: {sr['reps']}  |  Duration: {sr['duration']}")
+    workout_data = [[ex] for ex in exercises]
+    print()
+    print(tabulate(workout_data, headers=["Exercise"], tablefmt="rounded_outline"))
 
+    sets_reps_data = [
+        ["Sets",     str(sr['sets'])],
+        ["Reps",     sr['reps']],
+        ["Duration", sr['duration']],
+    ]
+    print()
+    print(tabulate(sets_reps_data, headers=["Parameter", "Value"], tablefmt="rounded_outline"))
+
+    # ── Food suggestions table ────────────
     section("FOOD SUGGESTIONS")
+    food_data = []
     for macro_type, items in system.foods.items():
-        print(f"  {macro_type.upper():<10}: {', '.join(items)}")
+        food_data.append([macro_type.upper(), ", ".join(items)])
+    print()
+    print(tabulate(food_data, headers=["Macro Type", "Food Options"], tablefmt="rounded_outline"))
 
     # ── Graph menu ───────────────────────
     section("GRAPHS")
@@ -325,14 +348,20 @@ def week_tracker(user: UserData):
         picks = [int(p) for p in picks if 1 <= int(p) <= user.weeks]
         completed = len(set(picks))
 
-    print(f"\n  Completed: {completed}/{user.weeks} weeks")
+    # ── Progress summary table ────────────
+    progress_data = [
+        ["Completed", f"{completed}/{user.weeks} weeks"],
+        ["Remaining", f"{user.weeks - completed} week(s)"],
+    ]
+    print()
+    print(tabulate(progress_data, headers=["Progress", "Status"], tablefmt="rounded_outline"))
 
     if completed == user.weeks:
-        print("  🎉 Congratulations! You completed all weeks!")
+        print("\n  🎉 Congratulations! You completed all weeks!")
         show_progress_graph(user.weight, user.target_weight, user.weeks, finished=True)
     else:
         remaining = user.weeks - completed
-        print(f"  Keep going! {remaining} week(s) remaining.")
+        print(f"\n  Keep going! {remaining} week(s) remaining.")
         show_partial = input("  Show partial progress graph anyway? (y/n): ").strip().lower()
         if show_partial == "y":
             show_progress_graph(user.weight, user.target_weight, completed or 1, finished=False)
