@@ -28,24 +28,24 @@ class FitnessSystem:
 
         self.exercises = {
             'aerobic': {
-                'beginner':     ['Brisk Walking', 'Stationary Bike', 'Marching in Place'],
-                'intermediate': ['Brisk Walking', 'Stationary Bike', 'Jump Rope', 'Stair Climbing'],
-                'advanced':     ['Running', 'Jump Rope', 'Battle Ropes', 'Rowing Machine', 'Burpees'],
+                'beginner':     ['Brisk Walking - A low-impact aerobic exercise that elevates heart rate, improves cardiovascular health, burns calories, and is accessible for all fitness levels.', 'Stationary Bike - A seated cardio workout that targets legs, builds endurance, and minimizes joint stress.', 'Marching in Place - A simple, no-equipment cardio move that boosts heart rate, improves coordination, and warms up muscles.'],
+                'intermediate': ['Brisk Walking - A low-impact aerobic exercise that elevates heart rate, improves cardiovascular health, burns calories, and is accessible for all fitness levels.', 'Stationary Bike - A seated cardio workout that targets legs, builds endurance, and minimizes joint stress.', 'Jump Rope - High-intensity cardio that enhances agility, coordination, foot speed, and burns fat quickly. Use a properly sized rope.', 'Stair Climbing - A full-body calorie torcher that strengthens legs, glutes, and cardio system. Use stairs or a stepper.'],
+                'advanced':     ['Running - Powerful full-body cardio that builds speed, endurance, and leg strength. Suitable outdoors or treadmill.', 'Jump Rope - High-intensity cardio that enhances agility, coordination, foot speed, and burns fat quickly. Use a properly sized rope.', 'Battle Ropes - Explosive upper-body and core cardio that spikes heart rate, builds power, and engages full body.', 'Rowing Machine - A full-body cardiovascular exercise that works the entire body, improving endurance and strength.', 'Burpees - High-intensity full-body exercise combining strength and cardio for maximum calorie burn and metabolism boost.'],
             },
             'strength': {
-                'beginner':     ['Bodyweight Squats', 'Push-ups (Knee)', 'Seated Dumbbell Press'],
-                'intermediate': ['Goblet Squats', 'Push-ups', 'Dumbbell Rows', 'Plank'],
-                'advanced':     ['Barbell Back Squats', 'Bench Press', 'Deadlifts', 'Pull-ups', 'Weighted Lunges'],
+                'beginner':     ['Bodyweight Squats - A fundamental exercise that targets the legs, glutes, and core. Great for building foundational strength.', 'Push-ups (Knee) - A modified push-up variation that reduces intensity while still targeting the chest, shoulders, and triceps.', 'Seated Dumbbell Press - A seated exercise that focuses on the shoulders and triceps, using light dumbbells for controlled movement.'],
+                'intermediate': ['Goblet Squats - A squat variation that emphasizes the quads and glutes while improving core stability.', 'Push-ups - A classic upper-body exercise that builds chest, shoulder, and tricep strength.', 'Dumbbell Rows - A back exercise that targets the rhomboids, middle traps, and rear deltoids.', 'Plank - A core exercise that strengthens the entire midsection and improves posture.'],
+                'advanced':     ['Barbell Back Squats - A compound exercise that targets the back, glutes, and legs, building overall strength and power.', 'Bench Press - A classic upper-body exercise that builds chest, shoulder, and tricep strength.', 'Deadlifts - A compound exercise that targets the back, glutes, and legs, building overall strength and power.', 'Pull-ups - A bodyweight exercise that builds back and arm strength.', 'Weighted Lunges - A unilateral exercise that targets the legs and glutes while improving balance and coordination.'],
             },
             'balance': {
-                'beginner':     ['Single Leg Stand', 'Heel-to-Toe Walk'],
-                'intermediate': ['Single Leg Stand', 'Tree Pose', 'Side Leg Raises'],
-                'advanced':     ['Single Leg Pistol Squat', 'BOSU Ball Stand', 'Single Leg Deadlift', 'Warrior III'],
+                'beginner':     ['Single Leg Stand - A balance exercise that improves stability and proprioception.', 'Heel-to-Toe Walk - A walking exercise that enhances balance and coordination.'],
+                'intermediate': ['Single Leg Stand - A balance exercise that improves stability and proprioception.', 'Tree Pose - A yoga pose that enhances balance, flexibility, and focus.', 'Side Leg Raises - A lateral movement exercise that strengthens the hips and improves stability.'],
+                'advanced':     ['Single Leg Pistol Squat - A challenging single-leg exercise that builds strength and balance.', 'BOSU Ball Stand - A balance exercise that uses a BOSU ball to challenge stability.', 'Single Leg Deadlift - A unilateral exercise that targets the legs and glutes while improving balance.', 'Warrior III - A yoga pose that enhances balance, flexibility, and core strength.'],
             },
             'flexibility': {
-                'beginner':     ['Seated Forward Bend', 'Cat-Cow Stretch'],
-                'intermediate': ['Downward Dog', 'Pigeon Pose', 'Seated Spinal Twist'],
-                'advanced':     ['Full Splits', 'Deep Forward Fold', 'King Pigeon', 'Wheel Pose'],
+                'beginner':     ['Seated Forward Bend - A gentle stretch that targets the hamstrings and lower back.', 'Cat-Cow Stretch - A dynamic stretch that improves spinal mobility and relieves tension.'],
+                'intermediate': ['Downward Dog - A yoga pose that stretches the hamstrings and calves while strengthening the arms and shoulders.', 'Pigeon Pose - A hip opener that stretches the hip flexors and glutes.', 'Seated Spinal Twist - A gentle twist that improves spinal mobility and relieves tension.'],
+                'advanced':     ['Full Splits - A challenging stretch that improves flexibility and range of motion.', 'Deep Forward Fold - A deep stretch that targets the hamstrings and lower back.', 'King Pigeon - A challenging hip opener that stretches the hip flexors and glutes.', 'Wheel Pose - A backbend that improves flexibility and strengthens the core.'],
             },
         }
 
@@ -229,8 +229,8 @@ def collect_inputs() -> UserData:
         age = get_int("Age")
 
     height = get_float("Height (cm)")
-    while not (0 < height <= 300):
-        print("  ⚠  Must be 1–300 cm.")
+    while not (120 <= height <= 300):
+        print("  ⚠  Must be 120–300 cm.")
         height = get_float("Height (cm)")
 
     gender_str = choose("Gender:", ["Male", "Female"])
@@ -313,26 +313,25 @@ def display_results(user: UserData):
     print(tabulate(food_data, headers=["Macro Type", "Food Options"], tablefmt="rounded_outline"))
 
     # ── Graph menu ───────────────────────
-    section("GRAPHS")
-    print("  1) Show Macronutrient Distribution Graph")
-    print("  2) Show Weight Progress Graph")
-    print("  3) Skip")
+    while True:
+        section("GRAPHS")
+        print("  1) Show Macronutrient Distribution Graph")
+        print("  2) Show Weight Progress Graph")
+        print("  3) Skip")
 
-    choice = input("\n  Choose an option: ").strip()
+        choice = input("\n  Choose an option: ").strip()
 
-    if choice == "1":
-        show_graph(macros)
+        if choice not in ("1", "2", "3"):
+            print("  ❌ Invalid choice. Please enter 1, 2, or 3.")
+            continue
 
-    elif choice == "2":
-        week_tracker(user)
+        if choice == "3":
+            break
 
-    # ── Week tracker ─────────────────────
-    if choice != "2":
-        print()
-        again = input("  Would you also like to track weekly progress? (y/n): ").strip().lower()
-        if again == "y":
+        if choice == "1":
+            show_graph(macros)
+        elif choice == "2":
             week_tracker(user)
-
 
 def week_tracker(user: UserData):
     section("WEEKLY PROGRESS TRACKER")
