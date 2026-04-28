@@ -109,12 +109,70 @@ class FitnessSystem:
 #  GRAPHS
 # ─────────────────────────────────────────
 def show_graph(macros: dict):
-    labels = ["Protein", "Carbs", "Fats"]
-    values = [macros["protein"], macros["carbs"], macros["fats"]]
-    plt.figure()
-    plt.bar(labels, values, color=["#4CAF50", "#2196F3", "#FF9800"])
-    plt.title("Macronutrient Distribution (g)")
-    plt.ylabel("Grams")
+    labels  = ["Protein", "Carbs", "Fats"]
+    values  = [macros["protein"], macros["carbs"], macros["fats"]]
+    colors  = ["#4CAF50", "#2196F3", "#FF9800"]
+    total   = sum(values)
+
+    fig, (ax_bar, ax_table) = plt.subplots(
+        2, 1,
+        figsize=(7, 7),
+        gridspec_kw={"height_ratios": [3, 1]},
+    )
+    fig.suptitle("Macronutrient Distribution", fontsize=14, fontweight="bold", y=0.98)
+
+    # ── Bar chart ─────────────────────────
+    bars = ax_bar.bar(labels, values, color=colors, width=0.5, zorder=3)
+    ax_bar.set_ylabel("Grams")
+    ax_bar.set_ylim(0, max(values) * 1.25)
+    ax_bar.yaxis.grid(True, linestyle="--", alpha=0.5, zorder=0)
+    ax_bar.set_axisbelow(True)
+
+    for bar, val in zip(bars, values):
+        ax_bar.text(
+            bar.get_x() + bar.get_width() / 2,
+            bar.get_height() + max(values) * 0.02,
+            f"{val}g",
+            ha="center", va="bottom", fontsize=11, fontweight="bold",
+        )
+
+    # ── Summary table inside figure ───────
+    ax_table.axis("off")
+    pct = [f"{v / total * 100:.1f}%" for v in values]
+    cal = [
+        f"{macros['protein'] * 4} kcal",
+        f"{macros['carbs']   * 4} kcal",
+        f"{macros['fats']    * 9} kcal",
+    ]
+    total_kcal = macros['protein'] * 4 + macros['carbs'] * 4 + macros['fats'] * 9
+    table_data = [
+        ["Protein", f"{values[0]}g", pct[0], cal[0]],
+        ["Carbs",   f"{values[1]}g", pct[1], cal[1]],
+        ["Fats",    f"{values[2]}g", pct[2], cal[2]],
+        ["Total",   f"{total}g",     "100%", f"{total_kcal} kcal"],
+    ]
+    col_labels = ["Macro", "Grams", "% of Total", "Calories"]
+
+    tbl = ax_table.table(
+        cellText  = table_data,
+        colLabels = col_labels,
+        cellLoc   = "center",
+        loc       = "center",
+    )
+    tbl.auto_set_font_size(False)
+    tbl.set_fontsize(10)
+    tbl.scale(1, 1.5)
+
+    header_color = "#333333"
+    row_colors   = ["#E8F5E9", "#E3F2FD", "#FFF3E0", "#F5F5F5"]
+    for (row, col), cell in tbl.get_celld().items():
+        if row == 0:
+            cell.set_facecolor(header_color)
+            cell.set_text_props(color="white", fontweight="bold")
+        else:
+            cell.set_facecolor(row_colors[row - 1])
+        cell.set_edgecolor("#CCCCCC")
+
     plt.tight_layout()
     plt.show()
 
@@ -122,14 +180,69 @@ def show_graph(macros: dict):
 def show_progress_graph(start_weight: float, target_weight: float, weeks: int, finished: bool):
     if weeks <= 0:
         weeks = 1
-    weights = np.linspace(start_weight, target_weight, weeks)
-    title = "Completed Progress" if finished else "Partial Progress"
-    plt.figure()
-    plt.plot(range(1, weeks + 1), weights, marker='o', color="#4CAF50")
-    plt.xlabel("Weeks")
-    plt.ylabel("Weight (kg)")
-    plt.title(title)
-    plt.grid(True)
+
+    week_nums = list(range(1, weeks + 1))
+    weights   = list(np.linspace(start_weight, target_weight, weeks))
+    title     = "Completed Progress" if finished else "Partial Progress"
+    diff      = target_weight - start_weight
+
+    fig, (ax_line, ax_table) = plt.subplots(
+        2, 1,
+        figsize=(8, 7),
+        gridspec_kw={"height_ratios": [3, 1]},
+    )
+    fig.suptitle(f"Weight Progress — {title}", fontsize=14, fontweight="bold", y=0.98)
+
+    # ── Line chart ────────────────────────
+    line_color = "#4CAF50" if finished else "#2196F3"
+    ax_line.plot(week_nums, weights, marker="o", color=line_color, linewidth=2.5,
+                 markersize=6, zorder=3)
+    ax_line.fill_between(week_nums, weights, alpha=0.15, color=line_color)
+    ax_line.set_xlabel("Week")
+    ax_line.set_ylabel("Weight (kg)")
+    ax_line.yaxis.grid(True, linestyle="--", alpha=0.5, zorder=0)
+    ax_line.set_axisbelow(True)
+
+    # Annotate first and last points
+    for idx in (0, -1):
+        ax_line.annotate(
+            f"{weights[idx]:.1f} kg",
+            xy=(week_nums[idx], weights[idx]),
+            xytext=(0, 10), textcoords="offset points",
+            ha="center", fontsize=9, color=line_color, fontweight="bold",
+        )
+
+    # ── Summary table inside figure ───────
+    ax_table.axis("off")
+    direction = "▲ Gain" if diff >= 0 else "▼ Loss"
+    col_labels = ["Start Weight", "Target Weight", "Change", "Duration"]
+    table_data = [[
+        f"{start_weight:.1f} kg",
+        f"{target_weight:.1f} kg",
+        f"{direction} {abs(diff):.1f} kg",
+        f"{weeks} week(s)",
+    ]]
+
+    tbl = ax_table.table(
+        cellText  = table_data,
+        colLabels = col_labels,
+        cellLoc   = "center",
+        loc       = "center",
+    )
+    tbl.auto_set_font_size(False)
+    tbl.set_fontsize(10)
+    tbl.scale(1, 2)
+
+    header_color = "#333333"
+    data_color   = "#E8F5E9" if finished else "#E3F2FD"
+    for (row, col), cell in tbl.get_celld().items():
+        if row == 0:
+            cell.set_facecolor(header_color)
+            cell.set_text_props(color="white", fontweight="bold")
+        else:
+            cell.set_facecolor(data_color)
+        cell.set_edgecolor("#CCCCCC")
+
     plt.tight_layout()
     plt.show()
 
@@ -363,7 +476,17 @@ def week_tracker(user: UserData):
         print(f"\n  Keep going! {remaining} week(s) remaining.")
         show_partial = input("  Show partial progress graph anyway? (y/n): ").strip().lower()
         if show_partial == "y":
-            show_progress_graph(user.weight, user.target_weight, completed or 1, finished=False)
+            # Need at least 2 data points to draw a meaningful line graph
+            if completed < 2:
+                print("  ⚠  At least 2 completed weeks are needed to plot a progress graph.")
+                print(f"     Come back once you've logged week 2 or beyond!")
+            else:
+                # Estimate current weight based on linear progress so far.
+                # e.g. if user is 4/12 weeks in, interpolate 4/12 of the way
+                # from start to target — not the target itself.
+                progress_ratio = completed / user.weeks
+                estimated_current = user.weight + (user.target_weight - user.weight) * progress_ratio
+                show_progress_graph(user.weight, estimated_current, completed, finished=False)
 
 
 # ─────────────────────────────────────────
